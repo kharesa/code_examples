@@ -1,3 +1,12 @@
+#Script written to process the lumo spreadsheet outputting formats appropiate for the google API
+#Auther: kharesa-Kesa Spencer
+#date: 28th February 2023 - 28/02/2023
+#input: lumo distance spreadsheet
+#outputs: csv of routes by driving and csv of routes by rail broken into legs
+
+
+
+
 import pandas as pd
 import numpy as np
 from pyproj import Transformer
@@ -10,13 +19,20 @@ def check_missing_data_types(df):
     print("Missing values:\n", df.isnull().sum())
     print("\nData types:\n", df.dtypes)
 
+    #removing all blanks and inconsistences from interchange_TUBE col
+    df['Interchange_TUBE'].fillna(value='None', inplace=True)
+    df['Interchange_TUBE'].replace('-','None',inplace=True)
+
+
+
 
 # define function to convert Easting and Northing coordinates into latitude longitude
 def lat_lon_conversion(df):
     transformer = Transformer.from_crs('epsg:27700', 'epsg:4326') # define coordinate reference systems
     df[['O_Easting', 'O_Northing']] = pd.DataFrame(transformer.transform(df['O_Easting'].values, df['O_Northing'].values)).T
     df[['D_Easting', 'D_Northing']] = pd.DataFrame(transformer.transform(df['D_Easting'].values, df['D_Northing'].values)).T
-    return df.rename(columns={'O_Easting': 'OLat', 'O_Northing': 'OLon', 'D_Easting': 'DLat', 'D_Northing':'DLon'}, inplace=True) # rename new columns
+    df.rename(columns={'O_Easting': 'OLat', 'O_Northing': 'OLon', 'D_Easting': 'DLat', 'D_Northing':'DLon'}, inplace=True) # rename new columns
+    return df
 
 
 def looper(df, df_transit, df_road):
@@ -42,7 +58,7 @@ def looper(df, df_transit, df_road):
         }, ignore_index=True)
 
 
-        if row['Interchange_at'] == 'direct':
+        if row['Interchange_at'] == 'Direct':
             
             df_transit = df_transit.append(
             {'OLon': OLon, 
@@ -55,7 +71,7 @@ def looper(df, df_transit, df_road):
             }, ignore_index=True)
 
         else:
-            if row['Interchange_TUBE'] in ('', '-'):
+            if row['Interchange_TUBE'] in ('None'):
                 #if no value for tube interchange
 
                 #origin to interchange
@@ -90,8 +106,7 @@ def looper(df, df_transit, df_road):
                 }, ignore_index=True)
 
             else:
-                print('Via London')
-
+                print(row['Concat'])
                 #origin to interchange
                     #get interchange coords
                 DLat, DLon = get_origin_station_coords(df, str(row['Interchange_at']))
@@ -144,7 +159,7 @@ def looper(df, df_transit, df_road):
 
 
 def get_origin_station_coords(df, lookup_val):
-    row=df.loc[df['Interchange_at']==lookup_val]
+    row=df.loc[df['O_Station']==lookup_val]
     lat = row.iloc[0]['OLat']
     lon = row.iloc[0]['OLon']
     return lat, lon
@@ -172,8 +187,9 @@ def get_tube_station_coords(df, lookup_val):
         lon = loc_dict['lon']
 
     except:
-        lat = np.null
-        lon = np.null
+        print('no lat lon', station_name)
+        lat = np.nan
+        lon = np.nan
 
     return lat, lon
 
@@ -183,7 +199,7 @@ def get_tube_station_coords(df, lookup_val):
 # read in xlsx workbook sheet 'Distance_Matrix_Concat_Lumo' file into a dataframe
 df = pd.read_excel('230203 First Rail_Lumo Distances.xlsx', sheet_name='Distance_Matrix_Concat_Lumo')
 #prepping output dfs
-df_transit = pd.DataFrame(columns=['route','leg','OLat','OLon','DLat','DLon','mode','transit_mode','interchange_stat'])
+df_transit = pd.DataFrame(columns=['route','leg','OLat','OLon','DLat','DLon','mode',])
 df_road = pd.DataFrame(columns=['route','origin_station','OLat','OLon','destination_station','DLat','DLon','mode'])
 
 check_missing_data_types(df)
@@ -196,3 +212,7 @@ df, df_transit, df_road = looper(df, df_transit, df_road)
 
 df_road['mode']='driving'
 df_transit['mode']='rail'
+print(df.shape, df_road.shape, df_transit.shape)
+
+df_road.to_csv('road_inputs.csv')
+df_transit.to_csv('transit_inputs.csv')
