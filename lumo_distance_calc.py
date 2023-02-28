@@ -45,4 +45,7 @@ for index, row in df.iterrows():
         else:
             print('Via London')
 
+def fill_df_road(df, df_road):
+    df_road = df_road.append({'OLon': df['O_Lon'], 'OLat': df['O_Lat'], 'DLon': df['D_Lon'], 'DLat': df['D_Lat'], 'route': df['Concat_route']}, ignore_index=True)
+    return df_road
 
