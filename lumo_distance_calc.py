@@ -35,4 +35,14 @@ for index, row in df.iterrows():
     OLon = row["OLon"]
     DLat = row["DLat"]
     DLon = row["DLon"]
+    
+    
+    if row['interchange_at'] == 'direct':
+        print('Direct')
+    else:
+        if row['interchange_TUBE'] in ('', '-'):
+            print('Only interchange with rail')
+        else:
+            print('Via London')
+
 
