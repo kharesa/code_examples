@@ -4,6 +4,8 @@ from pyproj import Transformer
 
 # read in xlsx workbook sheet 'Distance_Matrix_Concat_Lumo' file into a dataframe
 df = pd.read_excel('filename.xlsx', sheet_name='Distance_Matrix_Concat_Lumo')
+df_transit = pd.Dataframe(columns=['route','OLat','OLon','DLat','DLon','mode'])
+df_road = pd.Dataframe(columns=['route','OLat','OLon','DLat','DLon','mode'])
 
 # define function to check for missing values and data types of each column
 def check_missing_data_types(df):
