@@ -50,7 +50,8 @@ def looper(df, df_transit, df_road):
 
         #filling out driving table
         df_road = df_road.append(
-        {'OLon': OLon, 
+        {'route_id': (indexe.zfill(3)),
+        'OLon': OLon, 
         'OLat': OLat, 
         'DLon': DLon, 
         'DLat': DLat,
@@ -64,11 +65,14 @@ def looper(df, df_transit, df_road):
         if row['Interchange_at'] == 'Direct':
             
             df_transit = df_transit.append(
-            {'OLon': OLon, 
+            {'route_id': (indexe.zfill(3)),
+            'OLon': OLon, 
             'OLat': OLat, 
             'DLon': DLon, 
             'DLat': DLat, 
-            'route': route, 
+            'route': route,
+            'leg_id': (route+'_1'), 
+            'transit_mode': 'rail',
             'origin_station': row['O_Station'],
             'destination_station': row['D_Station']
             }, ignore_index=True)
@@ -83,12 +87,13 @@ def looper(df, df_transit, df_road):
 
                 #fill in the row in df_transit
                 df_transit = df_transit.append(
-                {'OLon': OLon, 
+                {'route_id': (indexe.zfill(3)),
+                'OLon': OLon, 
                 'OLat': OLat, 
                 'DLon': DLon, 
                 'DLat': DLat, 
                 'route': route,
-                'leg': (route+'_1'), 
+                'leg_id': (route+'_1'), 
                 'transit_mode': 'rail',
                 'origin_station': row['O_Station'],
                 'destination_station': row['Interchange_at']
@@ -100,31 +105,32 @@ def looper(df, df_transit, df_road):
                 DLat, DLon = get_destination_station_coords(df, str(row['D_Station']))
 
                 df_transit = df_transit.append(
-                {'OLon': OLon, 
+                {'route_id': (indexe.zfill(3)),
+                'OLon': OLon, 
                 'OLat': OLat, 
                 'DLon': DLon,
                 'DLat': DLat, 
                 'route': route,
-                'leg': (route+'_2'),
+                'leg_id': (route+'_2'),
                 'transit_mode': 'rail',
                 'origin_station': str(row['Interchange_at']),
                 'destination_station': str(row['D_Station'])
                 }, ignore_index=True)
 
             else:
-                print(row['Concat'])
                 #origin to interchange
                     #get interchange coords
                 DLat, DLon = get_origin_station_coords(df, str(row['Interchange_at']))
 
                 #fill in the row in df_transit
                 df_transit = df_transit.append(
-                {'OLon': OLon, 
+                {'route_id': (indexe.zfill(3)),
+                'OLon': OLon, 
                 'OLat': OLat, 
                 'DLon': DLon, 
                 'DLat': DLat, 
                 'route': route,
-                'leg': (route+'_1'),
+                'leg_id': (route+'_1'),
                 'transit_mode': 'rail',
                 'origin_station': row['O_Station'],
                 'destination_station': row['Interchange_at']
@@ -136,12 +142,13 @@ def looper(df, df_transit, df_road):
 
 
                 df_transit = df_transit.append(
-                {'OLon': OLon, 
+                {'route_id': (indexe.zfill(3)),
+                'OLon': OLon, 
                 'OLat': OLat, 
                 'DLon': lonn,
                 'DLat': latt, 
                 'route': route,
-                'leg': (route+'_2'), 
+                'leg_id': (route+'_2'), 
                 'transit_mode': 'subway',
                 'origin_station': str(row['Interchange_at']),
                 'destination_station': str(row['Interchange_TUBE'])
@@ -152,12 +159,13 @@ def looper(df, df_transit, df_road):
                 DLat, DLon = get_destination_station_coords(df, str(row['D_Station']))
 
                 df_transit = df_transit.append(
-                {'OLon': lonn, 
+                {'route_id': (indexe.zfill(3)),
+                'OLon': lonn, 
                 'OLat': latt, 
                 'DLon': DLon,
                 'DLat': DLat, 
                 'route': route,
-                'leg': (route+'_3'),
+                'leg_id': (route+'_3'),
                 'transit_mode': 'rail',
                 'origin_station': str(row['Interchange_TUBE']),
                 'destination_station': str(row['D_Station'])
@@ -209,8 +217,8 @@ def get_tube_station_coords(df, lookup_val):
 # read in xlsx workbook sheet 'Distance_Matrix_Concat_Lumo' file into a dataframe
 df = pd.read_excel('230203 First Rail_Lumo Distances.xlsx', sheet_name='Distance_Matrix_Concat_Lumo')
 #prepping output dfs
-df_transit = pd.DataFrame(columns=['route','leg','OLat','OLon','DLat','DLon','mode','transit_mode'])
-df_road = pd.DataFrame(columns=['route','origin_station','OLat','OLon','destination_station','DLat','DLon','mode'])
+df_transit = pd.DataFrame(columns=['route_id','route','leg_id','OLat','OLon','DLat','DLon','mode','transit_mode'])
+df_road = pd.DataFrame(columns=['route_id','route','origin_station','OLat','OLon','destination_station','DLat','DLon','mode'])
 
 check_missing_data_types(df)
 # execute function to convert Easting and Northing coordinates into latitude longitude and rename columns
@@ -224,7 +232,7 @@ df_road['mode']='driving'
 df_transit['mode']='transit'
 print(df.shape, df_road.shape, df_transit.shape)
 
-df_road.to_csv('road_inputs.csv')
-df_transit.to_csv('transit_inputs.csv')
+df_road.to_csv('road_inputs.csv', index=False)
+df_transit.to_csv('transit_inputs.csv', index=False)
 sample = df_transit.sample(n=20,random_state=1)
-sample.to_csv('transit_smaple.csv')
+sample.to_csv('transit_smaple.csv', index=False)
